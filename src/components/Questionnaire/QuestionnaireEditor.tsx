@@ -98,6 +98,66 @@ import { QuestionnaireForm } from "./QuestionnaireForm";
 import { QuestionnaireProperties } from "./QuestionnaireProperties";
 import ValueSetSelect from "./ValueSetSelect";
 
+const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1MB in bytes
+
+interface ValidationResult {
+  isValid: boolean;
+  error?: string;
+  data?: QuestionnaireDetail;
+}
+
+const validateFileSize = (size: number): boolean => {
+  return size <= MAX_FILE_SIZE;
+};
+
+const validateQuestionnaireImport = (content: string): ValidationResult => {
+  try {
+    const data = JSON.parse(content);
+
+    if (!data.title || !Array.isArray(data.questions)) {
+      return {
+        isValid: false,
+        error: "invalid_questionnaire_format",
+      };
+    }
+
+    return {
+      isValid: true,
+      data,
+    };
+  } catch (_error) {
+    return {
+      isValid: false,
+      error: "failed_to_import_questionnaire",
+    };
+  }
+};
+
+const handleFileImport = async (
+  file: File,
+  onSuccess: (data: QuestionnaireDetail) => void,
+  onError: (error: string) => void,
+): Promise<void> => {
+  if (!validateFileSize(file.size)) {
+    onError("file_size_error");
+    return;
+  }
+
+  try {
+    const content = await file.text();
+    const validation = validateQuestionnaireImport(content);
+
+    if (!validation.isValid || !validation.data) {
+      onError(validation.error!);
+      return;
+    }
+
+    onSuccess(validation.data);
+  } catch (_error) {
+    onError("failed_to_import_questionnaire");
+  }
+};
+
 interface QuestionnaireEditorProps {
   id?: string;
 }
@@ -346,16 +406,27 @@ export default function QuestionnaireEditor({ id }: QuestionnaireEditorProps) {
   });
 
   const { mutate: importQuestionnaire, isPending: isImporting } = useMutation({
-    mutationFn: async (url: string) => {
+    mutationFn: async (url: string): Promise<QuestionnaireDetail> => {
       const response = await fetch(url);
       if (!response.ok) throw new Error("Failed to fetch questionnaire");
-      return response.json();
+
+      const blob = await response.blob();
+
+      return new Promise((resolve, reject) => {
+        handleFileImport(
+          new File([blob], "questionnaire.json", { type: "application/json" }),
+          resolve,
+          (error) => reject(new Error(t(error))),
+        );
+      });
     },
-    onSuccess: (data) => {
+    onSuccess: (data: QuestionnaireDetail) => {
       setImportedData(data);
     },
-    onError: () => {
-      toast.error(t("failed_to_import_questionnaire"));
+    onError: (error) => {
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0].message);
+      }
     },
   });
 
@@ -1185,7 +1256,12 @@ export default function QuestionnaireEditor({ id }: QuestionnaireEditorProps) {
       </Dialog>
       <Dialog
         open={showFileImportDialog}
-        onOpenChange={setShowFileImportDialog}
+        onOpenChange={(open) => {
+          setShowFileImportDialog(open);
+          if (!open) {
+            setSelectedImportFile(null);
+          }
+        }}
       >
         <DialogContent>
           <DialogHeader>
@@ -1269,16 +1345,16 @@ export default function QuestionnaireEditor({ id }: QuestionnaireEditorProps) {
             <Button
               onClick={async () => {
                 if (selectedImportFile) {
-                  try {
-                    const content = await selectedImportFile.text();
-                    const data = JSON.parse(content);
-                    setImportedData(data);
-                    setShowFileImportDialog(false);
-                    setShowImportDialog(true);
-                    setSelectedImportFile(null);
-                  } catch (_error) {
-                    toast.error(t("failed_to_import_questionnaire"));
-                  }
+                  await handleFileImport(
+                    selectedImportFile,
+                    (data) => {
+                      setImportedData(data);
+                      setShowFileImportDialog(false);
+                      setShowImportDialog(true);
+                      setSelectedImportFile(null);
+                    },
+                    (error) => toast.error(t(error)),
+                  );
                 }
               }}
               disabled={!selectedImportFile}
