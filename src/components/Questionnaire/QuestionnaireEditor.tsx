@@ -98,7 +98,7 @@ import { QuestionnaireForm } from "./QuestionnaireForm";
 import { QuestionnaireProperties } from "./QuestionnaireProperties";
 import ValueSetSelect from "./ValueSetSelect";
 
-const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1MB in bytes
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
 
 interface ValidationResult {
   isValid: boolean;
