@@ -353,7 +353,6 @@ export default function QuestionnaireEditor({ id }: QuestionnaireEditorProps) {
     },
     onSuccess: (data) => {
       setImportedData(data);
-      toast.success(t("questionnaire_imported_successfully"));
     },
     onError: () => {
       toast.error(t("failed_to_import_questionnaire"));
@@ -682,6 +681,7 @@ export default function QuestionnaireEditor({ id }: QuestionnaireEditorProps) {
             <Button
               variant="outline"
               onClick={handleDownload}
+              disabled={isCreating || isUpdating}
               data-cy="download-questionnaire-form"
             >
               <CareIcon icon="l-import" className="mr-1 size-4" />
@@ -1175,7 +1175,7 @@ export default function QuestionnaireEditor({ id }: QuestionnaireEditorProps) {
                 onClick={handleImport}
                 disabled={!importUrl || isImporting}
               >
-                {isImporting ? t("importing") : t("import")}
+                {isImporting ? t("continue") : t("continue")}
               </Button>
             ) : (
               <Button onClick={handleImportConfirm}>{t("import_form")}</Button>
@@ -1236,7 +1236,7 @@ export default function QuestionnaireEditor({ id }: QuestionnaireEditorProps) {
                     : t("drag_and_drop_or_click_to_select")}
                 </p>
                 <p className="text-xs text-gray-400 select-none">
-                  {t("json_files_only")}
+                  {t("json_file_only")}
                 </p>
               </div>
             </div>
@@ -1283,7 +1283,7 @@ export default function QuestionnaireEditor({ id }: QuestionnaireEditorProps) {
               }}
               disabled={!selectedImportFile}
             >
-              {t("continue")}
+              {isImporting ? t("continue") : t("continue")}
             </Button>
           </DialogFooter>
         </DialogContent>
