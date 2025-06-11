@@ -58,17 +58,15 @@ export function formatValue(
   switch (type) {
     case "dateTime":
       return value instanceof Date
-        ? formatDateTime(value.toISOString(), "hh:mm A; DD/MM/YYYY")
-        : formatDateTime(value.toString(), "hh:mm A; DD/MM/YYYY");
-    case "date":
-      return formatDateTime(value.toString());
+        ? formatDateTime(value.toISOString())
+        : formatDateTime(value.toString());
     case "choice":
       return properCase(value.toString());
     case "decimal":
     case "integer":
-      return value.toString();
+      return typeof value === "number" ? value.toString() : value.toString();
     case "boolean":
-      return value === true || value === "true" ? t("yes") : t("no");
+      return value === "true" ? t("yes") : t("no");
     case "time":
       return value.toString().slice(0, 5);
     default:
