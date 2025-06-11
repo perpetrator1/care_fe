@@ -242,7 +242,7 @@ function LayoutOptionCard({
       <Label
         htmlFor={optionId}
         className={cn(
-          "flex flex-col items-center justify-between rounded-md border-2 border-gray-200 bg-white p-4 hover:bg-gray-50 peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary",
+          "flex flex-col items-center justify-between rounded-md border-2 border-gray-200 bg-white p-2 md:p-4 hover:bg-gray-50 peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary",
           isSelected && "border-primary",
         )}
       >
@@ -1959,7 +1959,7 @@ function QuestionEditor({
                         >
                           <div className="grid sm:grid-cols-2 grid-cols-1 gap-4">
                             <div>
-                              <Label>{t("value")}</Label>
+                              <Label className="mb-1">{t("value")}</Label>
                               <Input
                                 value={opt.value}
                                 onChange={(e) => {
@@ -1976,7 +1976,9 @@ function QuestionEditor({
                             </div>
                             <div className="flex gap-2">
                               <div className="flex-1">
-                                <Label>{t("display_text")}</Label>
+                                <Label className="mb-1">
+                                  {t("display_text")}
+                                </Label>
                                 <Input
                                   value={opt.display || ""}
                                   onChange={(e) => {
@@ -2213,7 +2215,7 @@ function QuestionEditor({
             <div className="space-y-2">
               {(question.enable_when || []).length > 0 && (
                 <div>
-                  <Label className="text-xs">{t("enable_behavior")}</Label>
+                  <Label className="text-xs mb-1">{t("enable_behavior")}</Label>
                   <Select
                     value={question.enable_behavior ?? "all"}
                     onValueChange={(val: "all" | "any") =>
@@ -2237,10 +2239,10 @@ function QuestionEditor({
               {(question.enable_when || []).map((condition, idx) => (
                 <div
                   key={idx}
-                  className="grid grid-cols-[2fr_1fr_2fr] gap-2 items-start"
+                  className="grid grid-cols-1 md:grid-cols-[2fr_1fr_2fr] gap-2 items-start"
                 >
                   <div>
-                    <Label className="text-xs">Question</Label>
+                    <Label className="text-xs mb-1">Question</Label>
                     <Input
                       value={condition.question}
                       onChange={(e) => {
@@ -2255,7 +2257,7 @@ function QuestionEditor({
                     />
                   </div>
                   <div>
-                    <Label className="text-xs">Operator</Label>
+                    <Label className="text-xs mb-1">Operator</Label>
                     <Select
                       value={condition.operator}
                       onValueChange={(
@@ -2321,7 +2323,7 @@ function QuestionEditor({
                   </div>
                   <div className="flex gap-2">
                     <div className="flex-1">
-                      <Label className="text-xs">Answer</Label>
+                      <Label className="text-xs mb-1">Answer</Label>
                       {condition.operator === "exists" ? (
                         <Select
                           value={condition.answer ? "true" : "false"}
