@@ -253,7 +253,6 @@ const ScheduleTemplateEditor = ({
                     date={field.value}
                     onChange={(date) => field.onChange(date)}
                     todayClassName="bg-gray-100 rounded-md"
-                    disabled={(date) => dayjs(date).isBefore(dayjs(), "day")}
                   />
                   <FormMessage />
                 </FormItem>
@@ -270,7 +269,6 @@ const ScheduleTemplateEditor = ({
                     date={field.value}
                     onChange={(date) => field.onChange(date)}
                     todayClassName="bg-gray-100 rounded-md"
-                    disabled={(date) => dayjs(date).isBefore(dayjs(), "day")}
                   />
                   <FormMessage />
                 </FormItem>
