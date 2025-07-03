@@ -1426,7 +1426,7 @@ export default function QuestionnaireEditor({ id }: QuestionnaireEditorProps) {
                 onClick={handleImport}
                 disabled={!importUrl || isImporting}
               >
-                {isImporting ? t("import") : t("importing")}
+                {isImporting ? t("importing") : t("import")}
               </Button>
             ) : (
               <Button onClick={handleImportConfirm}>{t("import_form")}</Button>
