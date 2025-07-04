@@ -110,6 +110,7 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
 interface ValidationResult {
   isValid: boolean;
   error?: string;
+  details?: string;
   data?: QuestionnaireDetail;
 }
 
@@ -128,11 +129,78 @@ const validateQuestionnaireImport = (content: string): ValidationResult => {
       };
     }
 
+    const validateNestedQuestions = (
+      questions: any,
+      path = "questions",
+    ): string | null => {
+      for (let i = 0; i < questions.length; i++) {
+        const question = questions[i];
+        const currentPath = `${path}[${i}]`;
+
+        if (!question.text || !question.link_id) {
+          return `${currentPath}: Missing required field (text or link_id)`;
+        }
+
+        if (!question.type) {
+          return `${currentPath}: Missing question type`;
+        }
+
+        if (question.type === "structured" && !question.structured_type) {
+          return `${currentPath}: Structured question requires structured_type`;
+        }
+
+        if (
+          question.type === "choice" &&
+          (!question.answer_option || !Array.isArray(question.answer_option))
+        ) {
+          return `${currentPath}: Choice question requires answer_option array`;
+        }
+
+        if (question.enable_when && Array.isArray(question.enable_when)) {
+          for (let j = 0; j < question.enable_when.length; j++) {
+            const enableWhen = question.enable_when[j];
+            if (
+              !enableWhen.question ||
+              !enableWhen.operator ||
+              enableWhen.answer === undefined
+            ) {
+              return `${currentPath}.enable_when[${j}]: Missing required enable_when fields`;
+            }
+          }
+        }
+
+        if (question.questions && Array.isArray(question.questions)) {
+          const nestedError = validateNestedQuestions(
+            question.questions,
+            `${currentPath}.questions`,
+          );
+          if (nestedError) return nestedError;
+        }
+      }
+      return null;
+    };
+
+    if (data.questions) {
+      const nestedError = validateNestedQuestions(data.questions);
+      if (nestedError) {
+        return {
+          isValid: false,
+          error: nestedError,
+        };
+      }
+    }
+
     return {
       isValid: true,
-      data,
+      data: data as QuestionnaireDetail,
     };
-  } catch (_error) {
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      return {
+        isValid: false,
+        error: "Invalid file format",
+      };
+    }
     return {
       isValid: false,
       error: "failed_to_import_questionnaire",
@@ -484,9 +552,70 @@ export default function QuestionnaireEditor({ id }: QuestionnaireEditorProps) {
     description: z.string().optional(),
     questions: z.array(
       z.object({
+        id: z.string().optional(),
         text: z.string().trim().min(1, t("field_required")),
         link_id: z.string().trim().min(1, t("field_required")),
         description: z.string().optional(),
+        type: z.enum([
+          "group",
+          "display",
+          "boolean",
+          "decimal",
+          "integer",
+          "date",
+          "dateTime",
+          "time",
+          "string",
+          "text",
+          "url",
+          "choice",
+          "open-choice",
+          "attachment",
+          "reference",
+          "quantity",
+          "structured",
+        ]),
+        structured_type: z.string().optional(),
+        required: z.boolean().optional(),
+        repeats: z.boolean().optional(),
+        read_only: z.boolean().optional(),
+        max_length: z.number().optional(),
+        answer_constraint: z.string().optional(),
+        answer_option: z
+          .array(
+            z.object({
+              value: z.union([z.string(), z.number(), z.boolean()]),
+              display: z.string().optional(),
+              _id: z.string().optional(),
+            }),
+          )
+          .optional(),
+        answer_value_set: z.string().optional(),
+        enable_when: z
+          .array(
+            z.object({
+              question: z.string(),
+              operator: z.enum([
+                "equals",
+                "not_equals",
+                "greater",
+                "less",
+                "greater_or_equals",
+                "less_or_equals",
+                "exists",
+              ]),
+              answer: z.union([z.string(), z.number(), z.boolean()]),
+            }),
+          )
+          .optional(),
+        enable_behavior: z.enum(["all", "any"]).optional(),
+        disabled_display: z.enum(["hidden", "protected"]).optional(),
+        styling_metadata: z
+          .object({
+            classes: z.string().optional(),
+            containerClasses: z.string().optional(),
+          })
+          .optional(),
         code: z
           .object({
             system: z.string().optional(),
@@ -502,8 +631,27 @@ export default function QuestionnaireEditor({ id }: QuestionnaireEditorProps) {
             display: z.string().optional(),
           })
           .optional(),
+        answer_unit: z
+          .object({
+            system: z.string().optional(),
+            code: z.string().optional(),
+            display: z.string().optional(),
+          })
+          .optional(),
+        is_component: z.boolean().optional(),
+        collect_time: z.boolean().optional(),
+        collect_performer: z.boolean().optional(),
+        collect_body_site: z.boolean().optional(),
+        collect_method: z.boolean().optional(),
+        is_observation: z.boolean().optional(),
+        formula: z.string().optional(),
+        questions: z.array(z.lazy(() => z.any())).optional(), // Recursive reference
       }),
     ),
+    status: z.enum(["draft", "active", "retired", "unknown"]).optional(),
+    subject_type: z.enum(["patient", "encounter", "organization"]).optional(),
+    version: z.string().optional(),
+    tags: z.array(z.any()).optional(),
   });
 
   const [questionnaire, setQuestionnaire] =
