@@ -62,6 +62,7 @@ export function DatePicker({ date, onChange, disabled }: DatePickerProps) {
             onChange?.(date);
             setOpen(false);
           }}
+          captionLayout="dropdown"
           initialFocus
           disabled={disabled}
         />
