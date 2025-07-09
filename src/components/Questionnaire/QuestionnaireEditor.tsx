@@ -187,7 +187,7 @@ const ImportquestionSchema: z.ZodType<any> = z.lazy(() =>
     if (val.type === "structured" && val.structured_type === undefined) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "structurde_type_required",
+        message: "structured_type_required",
       });
     }
 
