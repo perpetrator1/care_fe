@@ -127,36 +127,53 @@ const enableWhenSchema = z
   )
   .optional();
 
-const ImportquestionSchema: z.ZodType<any> = z.lazy(() =>
-  z
+const BaseQuestionSchema = z.object({
+  id: z.string().optional(),
+  text: z.string().trim().min(1, "field_required"),
+  link_id: z.string().trim().min(1, "field_required"),
+  description: z.string().optional(),
+  code: z
     .object({
-      text: z.string().min(1, "Question text is required"),
-      link_id: z.string().min(1, "link_id is required"),
-      type: z.string().min(1, "Question type is required"),
-      structured_type: z.string().optional(),
-      answer_option: z.array(z.any()).optional(),
-      enable_when: enableWhenSchema,
-      questions: z.array(ImportquestionSchema).optional(),
+      system: z.string().optional(),
+      code: z.string().optional(),
+      display: z.string().optional(),
     })
-    .superRefine((val, ctx) => {
-      // Validate structured_type for structured questions
-      if (val.type === "structured" && val.structured_type === undefined) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Structured question requires structured_type",
-          path: ["structured_type"],
-        });
-      }
+    .optional(),
+  unit: z
+    .object({
+      system: z.string().optional(),
+      code: z.string().optional(),
+      display: z.string().optional(),
+    })
+    .optional(),
+});
 
-      // Validate answer_option for choice questions
-      if (val.type === "choice" && val.answer_option === undefined) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Choice question requires answer_option array",
-          path: ["answer_option"],
-        });
-      }
-    }),
+const ImportquestionSchema: z.ZodType<any> = z.lazy(() =>
+  BaseQuestionSchema.extend({
+    type: z.string().min(1, "Question type is required"),
+    structured_type: z.string().optional(),
+    answer_option: z.array(z.any()).optional(),
+    enable_when: enableWhenSchema,
+    questions: z.array(ImportquestionSchema).optional(),
+  }).superRefine((val, ctx) => {
+    // Validate structured_type for structured questions
+    if (val.type === "structured" && val.structured_type === undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Structured question requires structured_type",
+        path: ["structured_type"],
+      });
+    }
+
+    // Validate answer_option for choice questions
+    if (val.type === "choice" && val.answer_option === undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Choice question requires answer_option array",
+        path: ["answer_option"],
+      });
+    }
+  }),
 );
 
 const questionsArraySchema = z.array(ImportquestionSchema);
@@ -556,29 +573,7 @@ export default function QuestionnaireEditor({ id }: QuestionnaireEditorProps) {
         message: t("slug_format_message"),
       }),
     description: z.string().optional(),
-    questions: z.array(
-      z.object({
-        id: z.string().optional(),
-        text: z.string().trim().min(1, t("field_required")),
-        link_id: z.string().trim().min(1, t("field_required")),
-        description: z.string().optional(),
-        code: z
-          .object({
-            system: z.string().optional(),
-            code: z.string().optional(),
-            display: z.string().optional(),
-          })
-          .optional(),
-
-        unit: z
-          .object({
-            system: z.string().optional(),
-            code: z.string().optional(),
-            display: z.string().optional(),
-          })
-          .optional(),
-      }),
-    ),
+    questions: z.array(BaseQuestionSchema),
   });
 
   const [questionnaire, setQuestionnaire] =
@@ -1608,7 +1603,7 @@ export default function QuestionnaireEditor({ id }: QuestionnaireEditorProps) {
                       setShowImportDialog(true);
                       setSelectedImportFile(null);
                     },
-                    (error) => toast.error(error),
+                    (error) => toast.error(t(error)),
                   );
                 }
               }}
