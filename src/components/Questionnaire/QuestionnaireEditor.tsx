@@ -120,8 +120,18 @@ const validateFileSize = (size: number): boolean => {
 const enableWhenSchema = z
   .array(
     z.object({
-      question: z.string().min(1, "Question reference is required"),
-      operator: z.string().min(1, "Operator is required"),
+      question: z
+        .string({
+          required_error: "reference_question_missing",
+          invalid_type_error: "invalid_type",
+        })
+        .min(1, "field_required"),
+      operator: z
+        .string({
+          required_error: "condition_required",
+          invalid_type_error: "invalid_type",
+        })
+        .min(1, "field_required"),
       answer: z.any().optional(),
     }),
   )
@@ -129,8 +139,20 @@ const enableWhenSchema = z
 
 const BaseQuestionSchema = z.object({
   id: z.string().optional(),
-  text: z.string().trim().min(1, "field_required"),
-  link_id: z.string().trim().min(1, "field_required"),
+  text: z
+    .string({
+      required_error: "text_field_required",
+      invalid_type_error: "invalid_type",
+    })
+    .trim()
+    .min(1, "field_required"),
+  link_id: z
+    .string({
+      required_error: "link_id_required",
+      invalid_type_error: "invalid_type",
+    })
+    .trim()
+    .min(1, "field_required"),
   description: z.string().optional(),
   code: z
     .object({
@@ -150,7 +172,12 @@ const BaseQuestionSchema = z.object({
 
 const ImportquestionSchema: z.ZodType<any> = z.lazy(() =>
   BaseQuestionSchema.extend({
-    type: z.string().min(1, "Question type is required"),
+    type: z
+      .string({
+        required_error: "question_type_required",
+        invalid_type_error: "invalid_type",
+      })
+      .min(1, "field_required"),
     structured_type: z.string().optional(),
     answer_option: z.array(z.any()).optional(),
     enable_when: enableWhenSchema,
@@ -160,8 +187,7 @@ const ImportquestionSchema: z.ZodType<any> = z.lazy(() =>
     if (val.type === "structured" && val.structured_type === undefined) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Structured question requires structured_type",
-        path: ["structured_type"],
+        message: "structurde_type_required",
       });
     }
 
@@ -169,8 +195,7 @@ const ImportquestionSchema: z.ZodType<any> = z.lazy(() =>
     if (val.type === "choice" && val.answer_option === undefined) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Choice question requires answer_option array",
-        path: ["answer_option"],
+        message: "answer_options_are_required",
       });
     }
   }),
@@ -196,10 +221,9 @@ const validateQuestionnaireImport = (content: string): ValidationResult => {
       } catch (error) {
         if (error instanceof z.ZodError) {
           const firstIssue = error.issues[0];
-          const path = firstIssue.path.join(".");
-          return `${path}: ${firstIssue.message}`;
+          return firstIssue.message;
         }
-        return "Invalid questionnaire structure";
+        return "invalid_questionnaire_structure";
       }
     };
 
@@ -221,7 +245,7 @@ const validateQuestionnaireImport = (content: string): ValidationResult => {
     if (error instanceof SyntaxError) {
       return {
         isValid: false,
-        error: "Invalid file format",
+        error: "invalid_file_format",
       };
     }
     return {
