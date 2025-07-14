@@ -18,15 +18,9 @@ interface DatePickerProps {
   date?: Date;
   onChange?: (date?: Date) => void;
   disabled?: (date: Date) => boolean;
-  todayClassName?: string;
 }
 
-export function DatePicker({
-  date,
-  onChange,
-  disabled,
-  todayClassName,
-}: DatePickerProps) {
+export function DatePicker({ date, onChange, disabled }: DatePickerProps) {
   const { t } = useTranslation();
 
   const [open, setOpen] = useState(false);
@@ -70,7 +64,6 @@ export function DatePicker({
           }}
           initialFocus
           disabled={disabled}
-          todayClassName={todayClassName}
         />
       </PopoverContent>
     </Popover>

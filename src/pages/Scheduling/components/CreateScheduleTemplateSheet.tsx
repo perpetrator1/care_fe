@@ -317,7 +317,6 @@ export default function CreateScheduleTemplateSheet({
                       <DatePicker
                         date={field.value}
                         onChange={(date) => field.onChange(date)}
-                        todayClassName="bg-gray-100 rounded-md"
                         disabled={(date) =>
                           dayjs(date).isBefore(dayjs(), "day")
                         }
@@ -336,7 +335,6 @@ export default function CreateScheduleTemplateSheet({
                       <DatePicker
                         date={field.value}
                         onChange={(date) => field.onChange(date)}
-                        todayClassName="bg-gray-100 rounded-md"
                         disabled={(date) =>
                           dayjs(date).isBefore(dayjs(), "day")
                         }

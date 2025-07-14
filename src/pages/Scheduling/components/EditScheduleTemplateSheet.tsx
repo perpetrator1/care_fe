@@ -252,7 +252,6 @@ const ScheduleTemplateEditor = ({
                   <DatePicker
                     date={field.value}
                     onChange={(date) => field.onChange(date)}
-                    todayClassName="bg-gray-100 rounded-md"
                   />
                   <FormMessage />
                 </FormItem>
@@ -268,7 +267,6 @@ const ScheduleTemplateEditor = ({
                   <DatePicker
                     date={field.value}
                     onChange={(date) => field.onChange(date)}
-                    todayClassName="bg-gray-100 rounded-md"
                   />
                   <FormMessage />
                 </FormItem>
