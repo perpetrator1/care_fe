@@ -171,6 +171,10 @@ function Calendar({
       style={{
         width: 248.8 * (columnsDisplayed ?? 1) + "px",
       }}
+      formatters={{
+        formatMonthDropdown: (date) =>
+          date.toLocaleString("default", { month: "short" }),
+      }}
       classNames={{
         months: _monthsClassName,
         month_caption: _monthCaptionClassName,
