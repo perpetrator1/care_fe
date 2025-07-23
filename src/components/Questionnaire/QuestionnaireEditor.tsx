@@ -205,36 +205,48 @@ const ImportquestionSchema: z.ZodType<any> = z.lazy(() =>
 
 const questionsArraySchema = z.array(ImportquestionSchema);
 
-const validateQuestionnaireImport = (content: string): ValidationResult => {
+const validateQuestionnaireImport = (
+  content: string,
+  t: (key: string, options?: any) => string,
+): ValidationResult => {
   try {
     const data = JSON.parse(content);
 
     if (!data.title || !Array.isArray(data.questions)) {
       return {
         isValid: false,
-        error: "invalid_questionnaire_format",
+        error: t("invalid_questionnaire_format"),
       };
     }
 
-    const validateNestedQuestions = (questions: any): string | null => {
+    const validateNestedQuestions = (
+      questions: any,
+    ): { message: string; path: (string | number)[] } | null => {
       try {
         questionsArraySchema.parse(questions);
         return null;
       } catch (error) {
         if (error instanceof z.ZodError) {
           const firstIssue = error.issues[0];
-          return firstIssue.message;
+          return { message: firstIssue.message, path: firstIssue.path };
         }
-        return "invalid_questionnaire_structure";
+        return { message: "invalid_questionnaire_structure", path: [] };
       }
     };
 
     if (data.questions) {
       const nestedError = validateNestedQuestions(data.questions);
       if (nestedError) {
+        const pathString = nestedError.path
+          .map((p) => (typeof p === "number" ? `[${p}]` : `.${p}`))
+          .join("")
+          .replace(/^\./, "");
         return {
           isValid: false,
-          error: nestedError,
+          error: t("import_error_with_path", {
+            error: t(nestedError.message),
+            path: pathString,
+          }),
         };
       }
     }
@@ -247,12 +259,12 @@ const validateQuestionnaireImport = (content: string): ValidationResult => {
     if (error instanceof SyntaxError) {
       return {
         isValid: false,
-        error: "invalid_file_format",
+        error: t("invalid_file_format"),
       };
     }
     return {
       isValid: false,
-      error: "failed_to_import_questionnaire",
+      error: t("failed_to_import_questionnaire"),
     };
   }
 };
@@ -261,6 +273,7 @@ const handleFileImport = async (
   file: File,
   onSuccess: (data: QuestionnaireDetail) => void,
   onError: (error: string) => void,
+  t: (key: string, options?: any) => string,
 ): Promise<void> => {
   if (!validateFileSize(file.size)) {
     onError("file_size_error");
@@ -269,7 +282,7 @@ const handleFileImport = async (
 
   try {
     const content = await file.text();
-    const validation = validateQuestionnaireImport(content);
+    const validation = validateQuestionnaireImport(content, t);
 
     if (!validation.isValid || !validation.data) {
       onError(validation.error!);
@@ -578,6 +591,7 @@ export default function QuestionnaireEditor({ id }: QuestionnaireEditorProps) {
           new File([blob], "questionnaire.json", { type: "application/json" }),
           resolve,
           (error) => reject(new Error(t(error))),
+          t,
         );
       });
     },
@@ -1644,7 +1658,8 @@ export default function QuestionnaireEditor({ id }: QuestionnaireEditorProps) {
                       setShowImportDialog(true);
                       setSelectedImportFile(null);
                     },
-                    (error) => toast.error(t(error)),
+                    (error) => toast.error(error),
+                    t,
                   );
                 }
               }}
