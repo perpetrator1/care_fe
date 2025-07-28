@@ -307,7 +307,7 @@ export default function useFileUpload(
           allowNameFallback && uploadFileNames[index] === "" && file
             ? file.name
             : uploadFileNames[index];
-        if (!filename) {
+        if (!filename || filename.trim() === "") {
           setError(t("file_error__single_file_name"));
           return;
         }
