@@ -1551,6 +1551,7 @@
   "downloading_abha_card": "Generating ABHA Card, Please hold on",
   "downloads": "Downloads",
   "draft": "Draft",
+  "supported_formats" : "Supported formats",
   "drag_and_drop_or_click_to_select": "Drag and drop file here or click to upload",
   "drag_drop_image_to_upload": "Drag & drop image to upload",
   "draw": "Draw",

@@ -12,13 +12,20 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -35,6 +42,7 @@ import AudioPlayerDialog from "@/components/Files/AudioPlayerDialog";
 import FileUploadDialog from "@/components/Files/FileUploadDialog";
 import { FileUploadModel } from "@/components/Patient/models";
 
+import useDragAndDrop from "@/hooks/useDragAndDrop";
 import useFileManager from "@/hooks/useFileManager";
 import useFileUpload from "@/hooks/useFileUpload";
 import useFilters from "@/hooks/useFilters";
@@ -344,60 +352,133 @@ export const FilesPage = ({
   };
 
   const FileUploadButtons = () => {
+    const [showDragDropDialog, setShowDragDropDialog] = useState(false);
+    const { dragOver, onDragOver, onDragLeave } = useDragAndDrop();
+
     if (!canEdit) return <></>;
+
     return (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="outline_primary"
-            className="flex flex-row items-center mr-2"
-            data-cy="add-files-button"
+      <>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline_primary"
+              className="flex flex-row items-center mr-2"
+              data-cy="add-files-button"
+            >
+              <CareIcon icon="l-file-upload" className="mr-1" />
+              <span>{t("add_files")}</span>
+              <CareIcon icon="l-angle-down" className="ml-1" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="end"
+            className="w-[calc(100vw-2.5rem)] sm:w-full"
           >
-            <CareIcon icon="l-file-upload" className="mr-1" />
-            <span>{t("add_files")}</span>
-            <CareIcon icon="l-angle-down" className="ml-1" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent
-          align="end"
-          className="w-[calc(100vw-2.5rem)] sm:w-full"
-        >
-          <DropdownMenuItem
-            className="flex flex-row items-center"
-            onSelect={(e) => {
-              e.preventDefault();
-            }}
-            aria-label={t("choose_file")}
-          >
-            <Label
-              htmlFor={`file_upload_${type}`}
-              data-cy="choose-file-option"
-              className="flex items-center w-full text-primary-900 hover:text-black py-1 font-medium"
+            <DropdownMenuItem
+              className="text-primary-900"
+              onSelect={(e) => {
+                e.preventDefault();
+                setShowDragDropDialog(true);
+              }}
+              aria-label={t("choose_file")}
             >
               <CareIcon icon="l-file-upload-alt" />
               <span>{t("choose_file")}</span>
-            </Label>
-            {fileUpload.Input({ className: "hidden" })}
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onSelect={() => fileUpload.handleCameraCapture()}
-            className="flex items-center text-primary-900 font-medium"
-            aria-label={t("open_camera")}
-          >
-            <CareIcon icon="l-camera" />
-            <span>{t("open_camera")}</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onSelect={() => fileUpload.handleAudioCapture()}
-            className="flex items-center text-primary-900 font-medium"
-            data-cy="record-audio-button"
-            aria-label={t("record")}
-          >
-            <CareIcon icon="l-microphone" />
-            <span>{t("record")}</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={() => fileUpload.handleCameraCapture()}
+              className="text-primary-900"
+              aria-label={t("open_camera")}
+            >
+              <CareIcon icon="l-camera" />
+              <span>{t("open_camera")}</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={() => fileUpload.handleAudioCapture()}
+              className="text-primary-900"
+              data-cy="record-audio-button"
+              aria-label={t("record")}
+            >
+              <CareIcon icon="l-microphone" />
+              <span>{t("record")}</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <Dialog open={showDragDropDialog} onOpenChange={setShowDragDropDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t("upload_files")}</DialogTitle>
+              <DialogDescription>
+                {t("drag_and_drop_or_click_to_select")}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div
+                className={cn(
+                  "border-2 border-dashed rounded-lg p-8 text-center transition-colors",
+                  dragOver
+                    ? "border-primary bg-primary/10"
+                    : "border-gray-200 hover:border-gray-300",
+                )}
+                onDragOver={onDragOver}
+                onDragLeave={onDragLeave}
+                onDrop={async (e) => {
+                  e.preventDefault();
+                  onDragLeave();
+                  const files = Array.from(e.dataTransfer.files);
+                  if (files.length > 0) {
+                    const input = document.getElementById(
+                      `file_upload_${type}`,
+                    ) as HTMLInputElement;
+                    if (input) {
+                      input.files = e.dataTransfer.files;
+                      input.dispatchEvent(
+                        new Event("change", { bubbles: true }),
+                      );
+                    }
+                    setShowDragDropDialog(false);
+                  }
+                }}
+                onClick={() => {
+                  const input = document.getElementById(
+                    `file_upload_${type}`,
+                  ) as HTMLInputElement;
+                  if (input) {
+                    input.click();
+                  }
+                }}
+              >
+                <div className="flex flex-col items-center gap-2">
+                  <CareIcon
+                    icon="l-cloud-upload"
+                    className="size-12 text-gray-400"
+                  />
+                  <p className="text-sm text-gray-500 select-none">
+                    {dragOver
+                      ? t("drop_file_here")
+                      : t("drag_and_drop_or_click_to_select")}
+                  </p>
+                  <p className="text-xs text-gray-400 select-none">
+                    {t("supported_formats")}:{" "}
+                    {BACKEND_ALLOWED_EXTENSIONS.join(", ")}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setShowDragDropDialog(false)}
+              >
+                {t("cancel")}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        {fileUpload.Input({ className: "hidden" })}
+      </>
     );
   };
 
