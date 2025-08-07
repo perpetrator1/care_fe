@@ -42,13 +42,13 @@ import UserSelector from "@/components/Common/UserSelector";
 
 import { getPermissions } from "@/common/Permissions";
 
-import routes from "@/Utils/request/api";
 import mutate from "@/Utils/request/mutate";
 import query from "@/Utils/request/query";
 import { formatName } from "@/Utils/utils";
 import { usePermissions } from "@/context/PermissionContext";
+import patientApi from "@/types/emr/patient/patientApi";
 import roleApi from "@/types/emr/role/roleApi";
-import { UserBase } from "@/types/user/user";
+import { UserReadMinimal } from "@/types/user/user";
 
 import { PatientProps } from ".";
 
@@ -60,7 +60,7 @@ function AddUserSheet({ patientId }: AddUserSheetProps) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<UserBase>();
+  const [selectedUser, setSelectedUser] = useState<UserReadMinimal>();
   const [selectedRole, setSelectedRole] = useState<string>("");
 
   const { data: roles } = useQuery({
@@ -71,7 +71,7 @@ function AddUserSheet({ patientId }: AddUserSheetProps) {
 
   const { mutate: assignUser } = useMutation({
     mutationFn: (body: { user: string; role: string }) =>
-      mutate(routes.patient.users.addUser, {
+      mutate(patientApi.addUser, {
         pathParams: { patientId },
         body,
       })(body),
@@ -104,7 +104,7 @@ function AddUserSheet({ patientId }: AddUserSheetProps) {
     });
   };
 
-  const handleUserChange = (user: UserBase) => {
+  const handleUserChange = (user: UserReadMinimal) => {
     setSelectedUser(user);
     setSelectedRole("");
   };
@@ -147,9 +147,6 @@ function AddUserSheet({ patientId }: AddUserSheetProps) {
                         {formatName(selectedUser)}
                       </p>
                     </TooltipComponent>
-                    <span className="text-sm text-gray-500">
-                      {selectedUser.email}
-                    </span>
                   </div>
                 </div>
 
@@ -237,14 +234,14 @@ export const PatientUsers = ({ patientData }: PatientProps) => {
 
   const { data: users } = useQuery({
     queryKey: ["patientUsers", patientId],
-    queryFn: query(routes.patient.users.listUsers, {
+    queryFn: query(patientApi.listUsers, {
       pathParams: { patientId },
     }),
   });
 
   const { mutate: removeUser } = useMutation({
     mutationFn: (user: string) =>
-      mutate(routes.patient.users.removeUser, {
+      mutate(patientApi.removeUser, {
         pathParams: { patientId },
         body: { user },
       })({ user }),
