@@ -92,6 +92,7 @@ export function CombinedDatePicker({
                 selected={value}
                 onSelect={handleSelect}
                 disabled={blockDate}
+                captionLayout="dropdown"
               />
             </TabsContent>
             <TabsContent value="relative" className="p-0">
