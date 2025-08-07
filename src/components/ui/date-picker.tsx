@@ -63,7 +63,8 @@ export function DatePicker({ date, onChange, disabled }: DatePickerProps) {
             setOpen(false);
           }}
           captionLayout="dropdown"
-          initialFocus
+          endMonth={new Date(2100, 11, 31)}
+          autoFocus
           disabled={disabled}
         />
       </PopoverContent>

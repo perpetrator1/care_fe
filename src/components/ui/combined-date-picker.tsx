@@ -93,6 +93,7 @@ export function CombinedDatePicker({
                 onSelect={handleSelect}
                 disabled={blockDate}
                 captionLayout="dropdown"
+                endMonth={new Date(2100, 11, 31)}
               />
             </TabsContent>
             <TabsContent value="relative" className="p-0">
