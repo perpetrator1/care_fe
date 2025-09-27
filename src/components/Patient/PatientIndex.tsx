@@ -126,17 +126,21 @@ export default function PatientIndex({ facilityId }: { facilityId: string }) {
     value?: string;
   }>({});
 
-  const handleSearch = useCallback((key: string, value: string) => {
-    if (key === "phone_number") {
-      setPhoneNumberQuery({
-        phone_number: isValidPhoneNumber(value) || value === "" ? value : null,
-      });
-      setIdentifierSearch({});
-    } else {
-      setPhoneNumberQuery({ phone_number: "" });
-      setIdentifierSearch({ config: key, value });
-    }
-  }, []);
+  const handleSearch = useCallback(
+    (key: string, value: string) => {
+      if (key === "phone_number") {
+        setPhoneNumberQuery({
+          phone_number:
+            isValidPhoneNumber(value) || value === "" ? value : null,
+        });
+        setIdentifierSearch({});
+      } else {
+        setPhoneNumberQuery({ phone_number: "" });
+        setIdentifierSearch({ config: key, value });
+      }
+    },
+    [setPhoneNumberQuery],
+  );
 
   const { data: patientList, isFetching } = useQuery({
     queryKey: ["patient-search", facilityId, phoneNumber, identifierSearch],
@@ -144,7 +148,11 @@ export default function PatientIndex({ facilityId }: { facilityId: string }) {
       body: phoneNumber
         ? { phone_number: phoneNumber }
         : identifierSearch.config && identifierSearch.value
-          ? { config: identifierSearch.config, value: identifierSearch.value }
+          ? {
+              config: identifierSearch.config,
+              value: identifierSearch.value,
+              page_size: 20,
+            }
           : {},
     }),
     enabled:
