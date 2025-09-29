@@ -399,14 +399,14 @@ export const FilesPage = ({
         </DropdownMenu>
 
         <Dialog open={showDragDropDialog} onOpenChange={setShowDragDropDialog}>
-          <DialogContent>
+          <DialogContent className="md:max-w-4xl max-h-screen overflow-auto">
             <DialogHeader className="space-y-2">
               <DialogTitle className="text-xl">{t("upload_files")}</DialogTitle>
               <DialogDescription className="text-base">
                 {t("drag_and_drop_or_click_to_select")}
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-6 sm:max-w-2xl mx-auto w-full">
+            <div className="space-y-6 mx-auto w-full">
               <div
                 className={cn(
                   "border-2 border-dashed rounded-lg p-12 text-center transition-colors min-h-[300px] flex items-center justify-center",
