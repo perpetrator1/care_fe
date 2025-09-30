@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import CareIcon from "@/CAREUI/icons/CareIcon";
-
+import DragAndDropDialog from "@/components/Files/DragAndDropDialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -12,10 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-
 import useFileUpload from "@/hooks/useFileUpload";
-
 import {
   BACKEND_ALLOWED_EXTENSIONS,
   FileCategory,
@@ -106,6 +103,7 @@ export function FilesQuestion(props: FilesQuestionProps) {
 
   const { t } = useTranslation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [showDragDropDialog, setShowDragDropDialog] = useState(false);
 
   const values =
     (questionnaireResponse.values?.[0]?.value as FileUploadQuestion[]) || [];
@@ -134,30 +132,54 @@ export function FilesQuestion(props: FilesQuestionProps) {
     compress: false,
   });
 
-  useEffect(() => {
-    if (fileUpload.files.length > 0) {
-      setDropdownOpen(false);
+  const handleFileUpload = (files: File[]) => {
+    if (files.length > 0) {
+      const dataTransfer = new DataTransfer();
+      files.forEach((file) => dataTransfer.items.add(file));
+
+      const input = document.getElementById(
+        "file_upload_encounter",
+      ) as HTMLInputElement;
+      if (input) {
+        input.files = dataTransfer.files;
+        input.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+      setShowDragDropDialog(false);
     }
-    (async () => {
+  };
+
+  useEffect(() => {
+    if (fileUpload.files.length > values.length) {
+      setDropdownOpen(false);
+      const newFiles = fileUpload.files.slice(values.length);
+      const newValues = newFiles.map((file) => ({
+        name: "",
+        file_data: file,
+        original_name: file.name,
+        file_type: FileType.ENCOUNTER,
+        file_category: FileCategory.UNSPECIFIED,
+        associating_id: encounterId,
+      }));
+
       updateQuestionnaireResponseCB(
         [
           {
             type: "files",
-            value: fileUpload.files.map((file, i) => ({
-              name: values[i]?.name || "",
-              file_data: file,
-              original_name: file.name,
-              file_type: FileType.ENCOUNTER,
-              file_category: FileCategory.UNSPECIFIED,
-              associating_id: encounterId,
-            })),
+            value: [...values, ...newValues],
           },
         ],
         questionnaireResponse.question_id,
         questionnaireResponse.note,
       );
-    })();
-  }, [fileUpload.files]);
+    }
+  }, [
+    fileUpload.files,
+    values,
+    encounterId,
+    questionnaireResponse.question_id,
+    questionnaireResponse.note,
+    updateQuestionnaireResponseCB,
+  ]);
 
   return (
     <div className="flex flex-col gap-2">
@@ -205,19 +227,14 @@ export function FilesQuestion(props: FilesQuestionProps) {
           className="w-[calc(100vw-2.5rem)] sm:w-full"
         >
           <DropdownMenuItem
-            className="flex flex-row items-center"
+            className="flex items-center text-primary-900 font-medium"
             onSelect={(e) => {
               e.preventDefault();
+              setShowDragDropDialog(true);
             }}
           >
-            <Label
-              htmlFor="file_upload_encounter"
-              className="flex items-center w-full text-primary-900 hover:text-black py-1 font-medium"
-            >
-              <CareIcon icon="l-file-upload-alt" />
-              <span>{t("choose_file")}</span>
-            </Label>
-            {fileUpload.Input({ className: "hidden" })}
+            <CareIcon icon="l-file-upload-alt" />
+            <span>{t("choose_file")}</span>
           </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={() => {
@@ -243,6 +260,12 @@ export function FilesQuestion(props: FilesQuestionProps) {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      <DragAndDropDialog
+        open={showDragDropDialog}
+        onOpenChange={setShowDragDropDialog}
+        onUpload={handleFileUpload}
+      />
+      {fileUpload.Input({ className: "hidden" })}
       {fileUpload.Dialogues}
     </div>
   );

@@ -19,7 +19,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -33,6 +32,7 @@ import { TooltipComponent } from "@/components/ui/tooltip";
 import Loading from "@/components/Common/Loading";
 import ArchivedFileDialog from "@/components/Files/ArchivedFileDialog";
 import AudioPlayerDialog from "@/components/Files/AudioPlayerDialog";
+import DragAndDropDialog from "@/components/Files/DragAndDropDialog";
 import FileUploadDialog from "@/components/Files/FileUploadDialog";
 
 import useFileManager from "@/hooks/useFileManager";
@@ -316,57 +316,82 @@ export const DischargeTab = ({
   };
 
   const FileUploadButtons = () => {
+    const [showDragDropDialog, setShowDragDropDialog] = useState(false);
+
     if (!canEdit) return <></>;
+
+    const handleFileUpload = (files: File[]) => {
+      if (files.length > 0) {
+        const dataTransfer = new DataTransfer();
+        files.forEach((file) => dataTransfer.items.add(file));
+
+        const input = document.getElementById(
+          `file_upload_${type}`,
+        ) as HTMLInputElement;
+        if (input) {
+          input.files = dataTransfer.files;
+          input.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+        setShowDragDropDialog(false);
+      }
+    };
+
     return (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="outline_primary"
-            className="flex flex-row items-center mr-2"
+      <>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline_primary"
+              className="flex flex-row items-center mr-2"
+              data-cy="add-files-button"
+            >
+              <CareIcon icon="l-file-upload" className="mr-1" />
+              <span>{t("add_files")}</span>
+              <CareIcon icon="l-angle-down" className="ml-1" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="end"
+            className="w-[calc(100vw-2.5rem)] sm:w-full"
           >
-            <CareIcon icon="l-file-upload" className="mr-1" />
-            <span>{t("add_files")}</span>
-            <CareIcon icon="l-angle-down" className="ml-1" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent
-          align="end"
-          className="w-[calc(100vw-2.5rem)] sm:w-full"
-        >
-          <DropdownMenuItem
-            className="flex flex-row items-center"
-            onSelect={(e) => {
-              e.preventDefault();
-            }}
-            aria-label={t("choose_file")}
-          >
-            <Label
-              htmlFor={`file_upload_${type}`}
-              className="flex items-center w-full text-primary-900 hover:text-black py-1 font-medium"
+            <DropdownMenuItem
+              className="text-primary-900"
+              onSelect={(e) => {
+                e.preventDefault();
+                setShowDragDropDialog(true);
+              }}
+              aria-label={t("choose_file")}
             >
               <CareIcon icon="l-file-upload-alt" />
               <span>{t("choose_file")}</span>
-            </Label>
-            {fileUpload.Input({ className: "hidden" })}
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onSelect={() => fileUpload.handleCameraCapture()}
-            className="flex items-center text-primary-900 font-medium"
-            aria-label={t("open_camera")}
-          >
-            <CareIcon icon="l-camera" />
-            <span>{t("open_camera")}</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onSelect={() => fileUpload.handleAudioCapture()}
-            className="flex items-center text-primary-900 font-medium"
-            aria-label={t("record")}
-          >
-            <CareIcon icon="l-microphone" />
-            <span>{t("record")}</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={() => fileUpload.handleCameraCapture()}
+              className="text-primary-900"
+              aria-label={t("open_camera")}
+            >
+              <CareIcon icon="l-camera" />
+              <span>{t("open_camera")}</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={() => fileUpload.handleAudioCapture()}
+              className="text-primary-900"
+              data-cy="record-audio-button"
+              aria-label={t("record")}
+            >
+              <CareIcon icon="l-microphone" />
+              <span>{t("record")}</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <DragAndDropDialog
+          open={showDragDropDialog}
+          onOpenChange={setShowDragDropDialog}
+          onUpload={handleFileUpload}
+        />
+        {fileUpload.Input({ className: "hidden" })}
+      </>
     );
   };
 
