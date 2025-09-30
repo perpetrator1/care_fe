@@ -24,7 +24,7 @@
     { "key": "h", "action": "patient-home", "description": "Go to Patient Home", "when": "always" }
   ],
 
-  "facility:patient:search": [
+  "patient:search": [
     { "key": "shift+?", "action": "show-shortcuts", "description": "Show Keyboard Shortcuts", "when": "always" },
     { "key": "shift+enter", "action": "submit-action", "description": "Submit Current Action", "when": "always" },
     { "key": "cmd+k", "action": "search-input-shortcut", "description": "Search Input", "when": "always" }
@@ -39,7 +39,8 @@
   "facility:appointment": [
     { "key": "2", "action": "create-encounter", "description": "Create Encounter", "when": "always" },
     { "key": "1", "action": "start-consultation", "description": "Start Consultation", "when": "always" },
-    { "key": "3", "action": "print-appointment", "description": "Print Appointment", "when": "always" }
+    { "key": "3", "action": "print-appointment", "description": "Print Appointment", "when": "always" },
+    { "key": "c", "action": "check-in-action", "description": "Check-in Appointment", "when": "always" }
   ],
 
   "facility:billing": [
