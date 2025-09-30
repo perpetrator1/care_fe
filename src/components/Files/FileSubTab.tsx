@@ -12,14 +12,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -39,9 +31,9 @@ import { TooltipComponent } from "@/components/ui/tooltip";
 import Loading from "@/components/Common/Loading";
 import ArchivedFileDialog from "@/components/Files/ArchivedFileDialog";
 import AudioPlayerDialog from "@/components/Files/AudioPlayerDialog";
+import DragAndDropDialog from "@/components/Files/DragAndDropDialog";
 import FileUploadDialog from "@/components/Files/FileUploadDialog";
 
-import useDragAndDrop from "@/hooks/useDragAndDrop";
 import useFileManager from "@/hooks/useFileManager";
 import useFileUpload from "@/hooks/useFileUpload";
 import useFilters from "@/hooks/useFilters";
@@ -345,10 +337,24 @@ export const FilesPage = ({
 
   const FileUploadButtons = () => {
     const [showDragDropDialog, setShowDragDropDialog] = useState(false);
-    const { dragOver, onDragOver, onDragLeave } = useDragAndDrop();
-    const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
     if (!canEdit) return <></>;
+
+    const handleFileUpload = (files: File[]) => {
+      if (files.length > 0) {
+        const dataTransfer = new DataTransfer();
+        files.forEach((file) => dataTransfer.items.add(file));
+
+        const input = document.getElementById(
+          `file_upload_${type}`,
+        ) as HTMLInputElement;
+        if (input) {
+          input.files = dataTransfer.files;
+          input.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+        setShowDragDropDialog(false);
+      }
+    };
 
     return (
       <>
@@ -372,7 +378,6 @@ export const FilesPage = ({
               className="text-primary-900"
               onSelect={(e) => {
                 e.preventDefault();
-                setSelectedFiles([]);
                 setShowDragDropDialog(true);
               }}
               aria-label={t("choose_file")}
@@ -400,147 +405,11 @@ export const FilesPage = ({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <Dialog
+        <DragAndDropDialog
           open={showDragDropDialog}
-          onOpenChange={(open) => {
-            setShowDragDropDialog(open);
-            if (!open) {
-              setSelectedFiles([]);
-            }
-          }}
-        >
-          <DialogContent className="md:max-w-4xl max-h-screen overflow-auto">
-            <DialogHeader className="space-y-2">
-              <DialogTitle className="text-xl">{t("upload_files")}</DialogTitle>
-              <DialogDescription className="text-base">
-                {t("drag_and_drop_or_click_to_select")}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div
-                className={cn(
-                  "border-2 border-dashed rounded-lg p-12 text-center transition-colors min-h-[300px] flex items-center justify-center",
-                  dragOver
-                    ? "border-primary bg-primary/10"
-                    : "border-gray-200 hover:border-gray-300",
-                )}
-                onDragOver={onDragOver}
-                onDragLeave={onDragLeave}
-                onDrop={async (e) => {
-                  e.preventDefault();
-                  onDragLeave();
-                  const newFiles = Array.from(e.dataTransfer.files);
-                  if (newFiles.length > 0) {
-                    setSelectedFiles((prevFiles) => [
-                      ...prevFiles,
-                      ...newFiles,
-                    ]);
-                  }
-                }}
-                onClick={() => {
-                  const input = document.createElement("input");
-                  input.type = "file";
-                  input.multiple = true;
-                  input.accept = BACKEND_ALLOWED_EXTENSIONS.map(
-                    (ext) => `.${ext}`,
-                  ).join(",");
-                  input.onchange = async (e) => {
-                    const newFiles = (e.target as HTMLInputElement).files;
-                    if (newFiles) {
-                      setSelectedFiles((prevFiles) => [
-                        ...prevFiles,
-                        ...Array.from(newFiles),
-                      ]);
-                    }
-                  };
-                  input.click();
-                }}
-              >
-                <div className="flex flex-col items-center gap-2">
-                  <CareIcon
-                    icon="l-cloud-upload"
-                    className="size-12 text-gray-400"
-                  />
-                  <p className="text-sm text-gray-500 select-none">
-                    {dragOver
-                      ? t("drop_file_here")
-                      : t("drag_and_drop_or_click_to_select")}
-                  </p>
-                  <p className="text-xs text-gray-400 select-none">
-                    {t("supported_formats")}:{" "}
-                    {BACKEND_ALLOWED_EXTENSIONS.join(", ")}
-                  </p>
-                </div>
-              </div>
-              {selectedFiles.length > 0 && (
-                <div className="space-y-2 max-h-48 overflow-y-auto p-2">
-                  {selectedFiles.map((file, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between p-2 border rounded-lg bg-gray-50"
-                    >
-                      <div className="flex items-center gap-2 overflow-hidden">
-                        <CareIcon
-                          icon="l-file"
-                          className="size-4 text-gray-400 flex-shrink-0"
-                        />
-                        <span className="text-sm truncate">{file.name}</span>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="flex-shrink-0"
-                        onClick={() => {
-                          setSelectedFiles((prevFiles) =>
-                            prevFiles.filter((_, i) => i !== index),
-                          );
-                        }}
-                      >
-                        <CareIcon icon="l-times" className="size-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowDragDropDialog(false);
-                  setSelectedFiles([]);
-                }}
-              >
-                {t("cancel")}
-              </Button>
-              <Button
-                onClick={() => {
-                  if (selectedFiles.length > 0) {
-                    const dataTransfer = new DataTransfer();
-                    selectedFiles.forEach((file) =>
-                      dataTransfer.items.add(file),
-                    );
-
-                    const input = document.getElementById(
-                      `file_upload_${type}`,
-                    ) as HTMLInputElement;
-                    if (input) {
-                      input.files = dataTransfer.files;
-                      input.dispatchEvent(
-                        new Event("change", { bubbles: true }),
-                      );
-                    }
-                    setShowDragDropDialog(false);
-                    setSelectedFiles([]);
-                  }
-                }}
-                disabled={selectedFiles.length === 0}
-              >
-                {t("upload")} ({selectedFiles.length})
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+          onOpenChange={setShowDragDropDialog}
+          onUpload={handleFileUpload}
+        />
         {fileUpload.Input({ className: "hidden" })}
       </>
     );
