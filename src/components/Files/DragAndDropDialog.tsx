@@ -28,6 +28,21 @@ const DragAndDropDialog = ({
   const { dragOver, onDragOver, onDragLeave } = useDragAndDrop();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
+  const addFiles = (files: File[]) => {
+    setSelectedFiles((prevFiles) => {
+      const uniqueNewFiles = files.filter(
+        (file) =>
+          !prevFiles.some(
+            (prevFile) =>
+              prevFile.name === file.name &&
+              prevFile.size === file.size &&
+              prevFile.lastModified === file.lastModified,
+          ),
+      );
+      return [...prevFiles, ...uniqueNewFiles];
+    });
+  };
+
   const handleOpenChange = (isOpen: boolean) => {
     onOpenChange(isOpen);
     if (!isOpen) {
@@ -66,7 +81,7 @@ const DragAndDropDialog = ({
               onDragLeave();
               const newFiles = Array.from(e.dataTransfer.files);
               if (newFiles.length > 0) {
-                setSelectedFiles((prevFiles) => [...prevFiles, ...newFiles]);
+                addFiles(newFiles);
               }
             }}
             onClick={() => {
@@ -79,10 +94,7 @@ const DragAndDropDialog = ({
               input.onchange = async (e) => {
                 const newFiles = (e.target as HTMLInputElement).files;
                 if (newFiles) {
-                  setSelectedFiles((prevFiles) => [
-                    ...prevFiles,
-                    ...Array.from(newFiles),
-                  ]);
+                  addFiles(Array.from(newFiles));
                 }
               };
               input.click();
