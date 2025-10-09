@@ -176,7 +176,6 @@ function Calendar({
         formatMonthDropdown: (date) =>
           date.toLocaleString("default", { month: "short" }),
       }}
-        
       classNames={{
         months: _monthsClassName,
         month_caption: _monthCaptionClassName,
