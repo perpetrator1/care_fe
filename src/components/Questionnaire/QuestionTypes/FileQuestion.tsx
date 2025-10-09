@@ -1,5 +1,5 @@
 import { t } from "i18next";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import CareIcon from "@/CAREUI/icons/CareIcon";
@@ -148,10 +148,11 @@ export function FilesQuestion(props: FilesQuestionProps) {
     }
   };
 
+  const processedCountRef = useRef(0);
   useEffect(() => {
-    if (fileUpload.files.length > values.length) {
+    if (fileUpload.files.length > processedCountRef.current) {
       setDropdownOpen(false);
-      const newFiles = fileUpload.files.slice(values.length);
+      const newFiles = fileUpload.files.slice(processedCountRef.current);
       const newValues = newFiles.map((file) => ({
         name: "",
         file_data: file,
@@ -171,6 +172,7 @@ export function FilesQuestion(props: FilesQuestionProps) {
         questionnaireResponse.question_id,
         questionnaireResponse.note,
       );
+      processedCountRef.current = fileUpload.files.length;
     }
   }, [
     fileUpload.files,
