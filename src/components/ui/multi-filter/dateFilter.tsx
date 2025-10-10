@@ -63,21 +63,8 @@ function CustomDateRange({
             }
           }}
           className="w-full"
-          styles={{
-            day: {
-              width: "40px",
-            },
-            weekdays: {
-              width: "100%",
-              justifyContent: "space-between",
-            },
-            nav: {
-              display: "flex",
-              flexDirection: "row",
-              justifyContent: "space-between",
-              padding: "0.5rem",
-            },
-          }}
+          captionLayout="dropdown"
+          endMonth={new Date(2100, 11, 31)}
           monthCaptionClassName="self-center"
         />
         <div className="my-2">
@@ -367,11 +354,7 @@ export const SelectedDateBadge = ({
           <></>
         )}
       </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align="start"
-        sideOffset={15}
-        className="w-[320px] p-0"
-      >
+      <DropdownMenuContent align="start" sideOffset={15} className="w-auto p-0">
         <RenderDateFilter
           filter={filter}
           selected={selected}
