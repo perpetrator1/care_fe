@@ -53,7 +53,7 @@ function CustomDateRange({
         label={t("custom_date_range")}
         onBack={() => setView("options")}
       />
-      <div className="flex flex-col max-h-[30vh] overflow-y-auto">
+      <div className="w-full flex flex-col max-h-[30vh] overflow-y-auto">
         <Calendar
           mode="range"
           selected={{ from: dateFrom, to: dateTo }}
@@ -62,10 +62,26 @@ function CustomDateRange({
               handleDateChange(date);
             }
           }}
+          styles={{
+            day: {
+              width: "40px",
+            },
+            weekdays: {
+              width: "100%",
+              justifyContent: "space-between",
+            },
+            nav: {
+              display: "flex",
+              flexDirection: "row",
+              justifyContent: "space-between",
+              padding: "0.5rem",
+            },
+          }}
           className="w-full"
           captionLayout="dropdown"
           endMonth={new Date(2100, 11, 31)}
           monthCaptionClassName="self-center"
+          rangeMiddleClassName="bg-primary/10 [&>button]:rounded-md"
         />
         <div className="my-2">
           <Separator orientation="horizontal" className="bg-gray-200 h-px" />
@@ -354,7 +370,11 @@ export const SelectedDateBadge = ({
           <></>
         )}
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" sideOffset={15} className="w-auto p-0">
+      <DropdownMenuContent
+        align="start"
+        sideOffset={15}
+        className="w-[320px] p-0"
+      >
         <RenderDateFilter
           filter={filter}
           selected={selected}
