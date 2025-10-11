@@ -7,7 +7,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
@@ -57,6 +57,8 @@ export default function ExcalidrawEditor({
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const { goBack } = useAppHistory();
 
+  const ElementsRef = useRef<readonly ExcalidrawElement[] | null>(null);
+
   const { mutate: saveDrawing } = useMutation({
     mutationFn: mutate(metaArtifactApi.upsert),
     onSuccess: () => {
@@ -81,6 +83,7 @@ export default function ExcalidrawEditor({
     }
     setName(data.name);
     setElements(data.object_value.elements);
+    ElementsRef.current = data.object_value.elements;
     setIsDirty(false);
   }, [data]);
 
@@ -205,8 +208,12 @@ export default function ExcalidrawEditor({
           }}
           onChange={debounce((newElements) => {
             setElements(newElements);
-            if (!isDirty && hashKey(newElements) !== hashKey(elements)) {
-              setIsDirty(true);
+            if (!isDirty && ElementsRef.current) {
+              const hasChanged =
+                hashKey(newElements) !== hashKey(ElementsRef.current);
+              if (hasChanged) {
+                setIsDirty(true);
+              }
             }
           }, 100)}
         />
